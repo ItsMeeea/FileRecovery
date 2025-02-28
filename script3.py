@@ -132,15 +132,15 @@ def extract_metadata(file_path, file_type):
             content = f.read()
             
             if file_type in ["Word Document", "PowerPoint Presentation", "Excel Spreadsheet"]:
-                metadata["ZIP Signature"] = binascii.hexlify(content[:4]).decode().upper()
+                mod_time = os.path.getmtime(file_path)
                 metadata["Document Size"] = len(content)
             
             elif file_type == "PDF Document":
-                metadata["PDF Signature"] = binascii.hexlify(content[:5]).decode().upper()
+                mod_time = os.path.getmtime(file_path)
                 metadata["First 100 Bytes"] = content[:100].decode(errors='ignore')
             
             elif file_type in ["PNG Image", "Digital camera JPG using EXIF", "JPEG/JFIF Graphics File"]:
-                metadata["File Signature"] = binascii.hexlify(content[:8]).decode().upper()
+                mod_time = os.path.getmtime(file_path)
                 metadata["EXIF Segment"] = binascii.hexlify(content[6:20]).decode().upper()
             
             elif file_type in ["EXE File", "DLL File"]:
@@ -158,7 +158,8 @@ def extract_metadata(file_path, file_type):
                 else:
                     metadata["Offset"] = "NA"
                 
-                metadata["Timestamp"] = datetime.datetime.utcfromtimestamp(struct.unpack("<I", content[pe_offset+8:pe_offset+12])[0]).isoformat()
+                timestamp = struct.unpack("<I", content[pe_offset+8:pe_offset+12])[0]
+                metadata["Timestamp"] = datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc).isoformat()
             
             elif file_type in ["Text File", "Batch Script", "PowerShell Script"]:
                 metadata["File Size"] = len(content)
